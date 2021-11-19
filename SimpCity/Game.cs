@@ -27,7 +27,6 @@ namespace SimpCity {
         private const int MAX_ROUNDS = GRID_WIDTH * GRID_HEIGHT;
         private const int BUILDING_COPIES = 8;
 
-
         private readonly IDictionary<BuildingTypes, BuildingInfo> buildingInfo;
         private readonly CityGrid grid;
         private int round;
@@ -78,6 +77,11 @@ namespace SimpCity {
             }
         }
 
+        private BuildingTypes RandomBuildingType() {
+            Array values = Enum.GetValues(typeof(BuildingTypes));
+            return (BuildingTypes)values.GetValue(ScRandom.GetInstance().Next(values.Length));
+        }
+
         private void DisplayGrid() {
             Console.WriteLine("Turn " + round);
             // TODO
@@ -99,17 +103,23 @@ namespace SimpCity {
         }
 
         public void Play() {
-            ConsoleMenu menu = new ConsoleMenu().BeforeInteraction(DisplayGrid);
-
-            // Add option for random 2 buildings
-            var a = buildingTypes.OrderBy(x => rnd.Next()).Take(5);
-
-            for () {
-                menu.AddOption("See remaining buildings")
+            ConsoleMenu menu = new ConsoleMenu()
+                .BeforeInteraction((m) => {
+                    // Choose random 2 buildings
+                    for (int i = 1; i < 3; i++) {
+                        BuildingTypes one = RandomBuildingType();
+                        // Replace the menu option
+                        m.EditOption(i.ToString(), string.Format("Build a {0}", buildingInfo[one].Code));
+                    }
+                })
+                // These two placeholders will be edited accordingly before each interaction
+                .AddOption("Placeholder 1")
+                .AddOption("Placeholder 2")
+                .AddOption("See remaining buildings", (m) => Console.WriteLine("Todo remaining building"))
+                .AddOption("See current score", (m) => Console.WriteLine("Todo curr score"))
                 .AddHeading()
-                .AddOption("Save game", (_cmd) => Console.WriteLine("Todo save game"))
+                .AddOption("Save game", (m) => Console.WriteLine("Todo save game"))
                 .AddExitOption("Exit to main menu");
-            }
 
             menu.DisplayInteraction();
 
