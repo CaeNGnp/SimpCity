@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace SimpCity.buildings {
     class House : CityGridBuilding {
-        public static new string Name { get; protected set; } = "House";
+        public static string Name { get; } = "House";
         /// <summary>
         /// The 3-character code for the building
         /// </summary>
-        public static new string Code { get; protected set; } = "HSE";
+        public static string Code { get; } = "HSE";
 
-        public House(CityGrid grid) : base(grid) {}
+        public House(BuildingInfo info) : base(info) {}
     }
 }

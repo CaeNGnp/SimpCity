@@ -27,16 +27,12 @@ namespace SimpCity {
     /// Represents a building in the grid.
     /// </summary>
     abstract class CityGridBuilding {
-        public static string Name { get; protected set; }
-        /// <summary>
-        /// The 3-character code for the building
-        /// </summary>
-        public static string Code { get; protected set; }
-
         public CityGrid Grid { get; protected set; }
-        
-        public CityGridBuilding(CityGrid grid) {
-            Grid = grid;
+        public BuildingInfo Info { get; protected set; }
+
+        public CityGridBuilding(BuildingInfo info) {
+            Info = info;
+            Grid = info.Grid;
         }
 
         /// <summary>
@@ -44,6 +40,7 @@ namespace SimpCity {
         /// </summary>
         /// <exception cref="System.InvalidOperationException">When the building already has a spot in the grid</exception>
         /// <exception cref="System.IndexOutOfRangeException">When the position is out of bounds</exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">When the position is already occupied</exception>
         public void Add(CityGridPosition pos) {
             Grid.Add(this, pos);
         }
@@ -101,12 +98,16 @@ namespace SimpCity {
         /// </summary>
         /// <exception cref="System.InvalidOperationException">When the item already has a spot in the grid</exception>
         /// <exception cref="System.IndexOutOfRangeException">When the position is out of bounds</exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">When the position is already occupied</exception>
         public void Add(CityGridBuilding item, CityGridPosition pos) {
             if (itemPosition.ContainsKey(item)) {
                 throw new System.InvalidOperationException("Item already has a spot in the grid at: " + itemPosition[item]);
             }
             if (!IsWithin(pos)) {
                 throw new System.IndexOutOfRangeException("Position not in grid boundary: " + pos);
+            }
+            if (grid[pos.X, pos.Y] != null) {
+                throw new System.ArgumentOutOfRangeException("The position is already occupied: " + pos);
             }
             grid[pos.X, pos.Y] = item;
             itemPosition[item] = pos.Clone();
@@ -128,6 +129,16 @@ namespace SimpCity {
         /// </summary>
         public CityGridPosition PositionOf(CityGridBuilding item) {
             return itemPosition.ContainsKey(item) ? itemPosition[item].Clone() : null;
+        }
+
+        /// <summary>
+        /// Retrieves the raw grid in multidimensional array form.
+        /// </summary>
+        /// <returns></returns>
+        public CityGridBuilding[,] GetRawGrid() {
+            //CityGridBuilding[,] newGrid = new CityGridBuilding[Width, Height];
+            // TODO: does .Clone() do deep copy on both dimensions?
+            return (CityGridBuilding[,])grid.Clone();
         }
     }
 }

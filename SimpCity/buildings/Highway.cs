@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace SimpCity.buildings {
     class Highway : CityGridBuilding {
-        public static new string Name { get; protected set; } = "Highway";
+        public static string Name { get; } = "Highway";
         /// <summary>
         /// The 3-character code for the building
         /// </summary>
-        public static new string Code { get; protected set; } = "HWY";
+        public static string Code { get; } = "HWY";
 
-        public Highway(CityGrid grid) : base(grid) {}
+        public Highway(BuildingInfo info) : base(info) {}
     }
 }

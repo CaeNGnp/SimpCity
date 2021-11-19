@@ -11,14 +11,17 @@ namespace SimpCity {
         Shop
     }
 
+    delegate CityGridBuilding MakeNewFunc(BuildingInfo info);
     class BuildingInfo {
         public BuildingTypes Type { get; set; }
+        public string Name { get; set; }
         /// <summary>
         /// The 3-character code for the building
         /// </summary>
         public string Code { get; set; }
         public int CopiesLeft { get; set; }
-        public Action MakeNew { get; set; }
+        public CityGrid Grid { get; set; }
+        public MakeNewFunc MakeNew { get; set; }
     }
 
     class Game {
@@ -35,45 +38,48 @@ namespace SimpCity {
             grid = new CityGrid(GRID_WIDTH, GRID_HEIGHT);
             round = 0;
 
-            // Exhaustive list of buildings and their operations.
-            // Type & CopiesLeft are automatically assigned after this.
+            // Exhaustive list of buildings and their operations
             buildingInfo = new Dictionary<BuildingTypes, BuildingInfo>() {
                 {
                     BuildingTypes.Beach, new BuildingInfo() {
                         Code = Beach.Code,
-                        MakeNew = () => new Beach(grid)
+                        Name = Beach.Name,
+                        MakeNew = (info) => new Beach(info)
                     }
                 },
                 {
                     BuildingTypes.Factory, new BuildingInfo() {
                         Code = Factory.Code,
-                        MakeNew = () => new Factory(grid)
+                        Name = Factory.Name,
+                        MakeNew = (info) => new Factory(info)
                     }
                 },
                 {
                     BuildingTypes.Highway, new BuildingInfo() {
                         Code = Highway.Code,
-                        MakeNew = () => new Highway(grid)
+                        Name = Highway.Name,
+                        MakeNew = (info) => new Highway(info)
                     }
                 },
                 {
                     BuildingTypes.House, new BuildingInfo() {
                         Code = House.Code,
-                        MakeNew = () => new House(grid)
+                        MakeNew = (info) => new House(info)
                     }
                 },
                 {
                     BuildingTypes.Shop, new BuildingInfo() {
                         Code = Shop.Code,
-                        MakeNew = () => new Shop(grid)
+                        MakeNew = (info) => new Shop(info)
                     }
                 }
             };
 
-            // Assign Type and CopiesLeft
+            // Automatically assign Type, CopiesLeft & Grid
             foreach (var item in buildingInfo) {
                 item.Value.Type = item.Key;
                 item.Value.CopiesLeft = BUILDING_COPIES;
+                item.Value.Grid = grid;
             }
         }
 
@@ -82,14 +88,80 @@ namespace SimpCity {
             return (BuildingTypes)values.GetValue(ScRandom.GetInstance().Next(values.Length));
         }
 
+        /// <summary>
+        /// Display an ASCII wizardry..
+        /// </summary>
         private void DisplayGrid() {
             Console.WriteLine("Turn " + round);
-            // TODO
+            CityGridBuilding[,] rawGrid = grid.GetRawGrid();
+
+            for (int y = 0; y < grid.Height; y++) {
+
+                // Print the horizontal heading
+                if (y == 0) {
+                    for (int x = 0; x < grid.Width; x++) {
+                        char alphabet = (char)('A' + x);
+                        Console.Write("     " + alphabet.ToString());
+                    }
+                    Console.WriteLine("");
+                }
+
+                Console.WriteLine("  " + Utils.RepeatString("+-----", grid.Width) + "+");
+
+                for (int x = 0; x < grid.Width; x++) {
+
+                    // Print the vertical heading
+                    if (x == 0) {
+                        Console.Write(y + 1);
+                    }
+                    var building = rawGrid[x, y];
+                    Console.Write(" | " + (building?.Info.Code ?? "   "));
+                }
+                Console.WriteLine("");
+            }
         }
 
-        private void MakeMove(CityGridBuilding building) {
+
+        /// <summary>
+        /// Converts a user input in "A1".."D4" coordinate form into a grid position,
+        /// </summary>
+        /// <exception cref="System.ArgumentException">When the input is not a supported coordinate format</exception>
+        private static CityGridPosition InputToPos(string inputPos) {
+            if (inputPos == null) {
+                throw new ArgumentException("Input not a supported coordinate format: " + inputPos ?? "(null)");
+            }
+
+            // Sanitise first
+            inputPos = inputPos.Trim().ToUpper();
+            if (inputPos.Length != 2) {
+                throw new ArgumentException("Input not a supported coordinate format: " + inputPos ?? "(null)");
+            }
+
+            // Convert letter to positional index
+            int x = inputPos[0] - 'A';
+            int y = inputPos[1] - '1';
+
+            return new CityGridPosition(x, y);
+        }
+
+        /// <summary>
+        /// This is triggered when the player chooses "Build <X>" option in the game.
+        /// </summary>
+        private void MakeMove(BuildingInfo info) {
+            CityGridBuilding building = info.MakeNew(info);
+            while (true) {
+                Console.Write("Choose the position to build: ");
+                try {
+                    CityGridPosition pos = InputToPos(Console.ReadLine());
+                    building.Add(pos);
+                    break;
+                } catch (Exception ex) {
+                    Console.WriteLine(ex.Message);
+                    continue;
+                }
+                
+            }
             round++;
-            // TODO
         }
 
         public void Save() {
@@ -105,11 +177,17 @@ namespace SimpCity {
         public void Play() {
             ConsoleMenu menu = new ConsoleMenu()
                 .BeforeInteraction((m) => {
+                    // Display the current grid
+                    DisplayGrid();
                     // Choose random 2 buildings
                     for (int i = 1; i < 3; i++) {
-                        BuildingTypes one = RandomBuildingType();
+                        BuildingTypes chosen = RandomBuildingType();
                         // Replace the menu option
-                        m.EditOption(i.ToString(), string.Format("Build a {0}", buildingInfo[one].Code));
+                        m.EditOption(
+                            i.ToString(), string.Format("Build a {0}", buildingInfo[chosen].Code),
+                            // Create a new building object and make the move
+                            (_) => MakeMove(buildingInfo[chosen])
+                        );
                     }
                 })
                 // These two placeholders will be edited accordingly before each interaction
@@ -123,7 +201,6 @@ namespace SimpCity {
 
             menu.DisplayInteraction();
 
-            throw new NotImplementedException();
         }
     }
 }
