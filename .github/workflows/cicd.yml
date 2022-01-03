@@ -1,25 +1,38 @@
-name: .NET
+name: Build and Tests
 
-on:
+# Workflow based off https://dev.to/felipetofoli/github-actions-for-net-full-framework-build-and-test-299h
+
+on:  
   push:
     branches: [ cicd ]
   pull_request:
     branches: [ cicd ]
 
-jobs:
-  build:
+jobs:  
+  build:    
+    runs-on: windows-latest
+    
+    steps:      
+      - uses: actions/checkout@v2
+      
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
 
-    runs-on: ubuntu-latest
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1.0.5
+        
+      - name: Setup VSTest
+        uses: darenm/Setup-VSTest@v1
 
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 5.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+      - name: Navigate to Workspace
+        run: cd $GITHUB_WORKSPACE
+
+      - name: Restore Packages
+        run: nuget restore SimpCity.sln
+
+      - name: Build Solution
+        run: |
+          msbuild.exe SimpCity.sln /p:platform="Any CPU" /p:configuration="Release"
+        
+      - name: Run Tests
+        run: vstest.console.exe .\SimpCityTests\bin\Release\SimpCityTests.dll
