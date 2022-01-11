@@ -5,8 +5,8 @@ using SimpCity.buildings;
 
 namespace SimpCity {
     public class Game {
-        private const int GRID_WIDTH = 4;
-        private const int GRID_HEIGHT = 4;
+        private const int GRID_WIDTH = 2;
+        private const int GRID_HEIGHT = 1;
         private const int MAX_ROUNDS = GRID_WIDTH * GRID_HEIGHT;
         private const int BUILDING_COPIES = 8;
 
@@ -32,6 +32,13 @@ namespace SimpCity {
                         Code = Factory.Code,
                         Name = Factory.Name,
                         MakeNew = () => new Factory(buildingInfo[BuildingTypes.Factory])
+                    }
+                },
+                {
+                    BuildingTypes.House, new BuildingInfo() {
+                        Code = House.Code,
+                        Name = House.Name,
+                        MakeNew = () => new House(buildingInfo[BuildingTypes.House])
                     }
                 },
                 {
@@ -114,6 +121,58 @@ namespace SimpCity {
 
             // Enclosure
             Console.WriteLine("  " + Utils.RepeatString("+-----", grid.Width) + "+");
+        }
+
+        /// <summary>
+        /// Calculates scores per building and building type.
+        /// </summary>
+        protected internal Dictionary<BuildingTypes, List<int>> calculateScores() {
+            // Create an empty map for the scores
+            var buildingScores = new Dictionary<BuildingTypes, List<int>>();
+            foreach (var entry in buildingInfo) {
+                buildingScores[entry.Value.Type] = new List<int>();
+            }
+
+            // Calculate and archive
+            ScoreCalculationArchive calcArchive = new ScoreCalculationArchive();
+            for (int y = 0; y < grid.Height; y++) {
+                for (int x = 0; x < grid.Width; x++) {
+                    try {
+                        CityGridBuilding b = grid.Get(new CityGridPosition(x, y));
+                        buildingScores[b.Info.Type].Add(b.CalcScore(calcArchive));
+                        calcArchive.calculated(b);
+                    } catch (Exception ex) {
+                        // TODO: Temporary catching while US-8 is in progress.
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine(ex.Message);
+                        Console.ResetColor();
+                    }
+                }
+            }
+
+            return buildingScores;
+        }
+
+        /// <summary>
+        /// Displays the current score.
+        /// </summary>
+        protected void DisplayScores() {
+            // Score display
+            int totalScore = 0;
+            foreach (var entry in calculateScores()) {
+                string formattedFormula = string.Join(" + ", entry.Value);
+                int score = 0;
+                foreach (int s in entry.Value) {
+                    score += s;
+                }
+                totalScore += score;
+
+                // Display per-type calculation
+                Console.WriteLine($"{buildingInfo[entry.Key].Code}: {formattedFormula}{(entry.Value.Count <= 0 ? "" : " = ")}{score}");
+            }
+
+            // Display the total score
+            Console.WriteLine($"Total score: {totalScore}");
         }
 
         /// <summary>
@@ -249,8 +308,7 @@ namespace SimpCity {
                         // Prepare to exit the game.
                         Console.WriteLine("Final layout of Simp City:");
                         DisplayGrid();
-
-                        // TODO: US-8/US-10a: Display scores
+                        DisplayScores();
                         m.Exit();
                         return;
                     }
