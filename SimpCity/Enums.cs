@@ -5,7 +5,6 @@
     public enum BuildingTypes {
         Beach,
         Factory,
-        House,
         Shop,
     }
 }

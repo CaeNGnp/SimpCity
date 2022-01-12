@@ -5,8 +5,8 @@ using SimpCity.buildings;
 
 namespace SimpCity {
     public class Game {
-        private const int GRID_WIDTH = 2;
-        private const int GRID_HEIGHT = 1;
+        private const int GRID_WIDTH = 4;
+        private const int GRID_HEIGHT = 4;
         private const int MAX_ROUNDS = GRID_WIDTH * GRID_HEIGHT;
         private const int BUILDING_COPIES = 8;
 
@@ -32,13 +32,6 @@ namespace SimpCity {
                         Code = Factory.Code,
                         Name = Factory.Name,
                         MakeNew = () => new Factory(buildingInfo[BuildingTypes.Factory])
-                    }
-                },
-                {
-                    BuildingTypes.House, new BuildingInfo() {
-                        Code = House.Code,
-                        Name = House.Name,
-                        MakeNew = () => new House(buildingInfo[BuildingTypes.House])
                     }
                 },
                 {
