@@ -4,19 +4,28 @@ using System.IO;
 using SimpCity.buildings;
 
 namespace SimpCity {
+    public class GameOptions {
+        /// <summary>
+        /// Disables the rule for adjacent placement of new buildings.
+        /// </summary>
+        public bool DisableAdjacentRule { get; set; } = false;
+    }
+
     public class Game {
         private const int GRID_WIDTH = 4;
         private const int GRID_HEIGHT = 4;
         private const int MAX_ROUNDS = GRID_WIDTH * GRID_HEIGHT;
         private const int BUILDING_COPIES = 8;
 
+        protected internal readonly GameOptions options;
         protected internal readonly IDictionary<BuildingTypes, BuildingInfo> buildingInfo;
         protected internal readonly CityGrid grid;
         protected internal int round;
 
-        public Game() {
+        public Game(GameOptions options = null) {
             grid = new CityGrid(GRID_WIDTH, GRID_HEIGHT);
             round = 1;
+            this.options = options;
 
             // Exhaustive list of buildings and their operations
             buildingInfo = new Dictionary<BuildingTypes, BuildingInfo>() {
@@ -186,7 +195,7 @@ namespace SimpCity {
             // Propagate any errors forward. Prioritise these exceptions.
             grid.PassiveAdd(building, pos);
 
-            if (round > 1) {
+            if (round > 1 && !(options?.DisableAdjacentRule ?? false)) {
                 // After the first round, check to ensure that there is at least one building in the adjacent position.
                 bool hasAdjacent = false;
                 foreach (CityGridOffset offset in CityGrid.AdjacentOffsets()) {
