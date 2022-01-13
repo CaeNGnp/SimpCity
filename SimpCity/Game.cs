@@ -119,7 +119,7 @@ namespace SimpCity {
         /// <summary>
         /// Calculates scores per building and building type.
         /// </summary>
-        protected internal Dictionary<BuildingTypes, List<int>> calculateScores() {
+        protected internal Dictionary<BuildingTypes, List<int>> CalculateScores() {
             // Create an empty map for the scores
             var buildingScores = new Dictionary<BuildingTypes, List<int>>();
             foreach (var entry in buildingInfo) {
@@ -152,7 +152,7 @@ namespace SimpCity {
         protected void DisplayScores() {
             // Score display
             int totalScore = 0;
-            foreach (var entry in calculateScores()) {
+            foreach (var entry in CalculateScores()) {
                 string formattedFormula = string.Join(" + ", entry.Value);
                 int score = 0;
                 foreach (int s in entry.Value) {
